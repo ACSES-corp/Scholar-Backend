@@ -77,9 +77,33 @@ class ArticleViewSet(ViewCountMixin, viewsets.ModelViewSet):
     queryset = Article.objects.select_related("category").prefetch_related("tags").all()
     serializer_class = ArticleSerializer
 
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        value = self.kwargs[lookup_url_kwarg]
+
+        if value.isdigit():
+            obj = queryset.filter(pk=value).first()
+            if obj:
+                return obj
+
+        return get_object_or_404(queryset, slug=value)
+
 class BookViewSet(ViewCountMixin, viewsets.ModelViewSet):
     queryset = Book.objects.select_related("category").prefetch_related("tags").all()
     serializer_class = BookSerializer
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        value = self.kwargs[lookup_url_kwarg]
+
+        if value.isdigit():
+            obj = queryset.filter(pk=value).first()
+            if obj:
+                return obj
+
+        return get_object_or_404(queryset, slug=value)
 
     @action(detail=True, methods=['get'])
     def download_pdf(self, request, pk=None):
@@ -100,6 +124,18 @@ class BookViewSet(ViewCountMixin, viewsets.ModelViewSet):
 class CourseViewSet(ViewCountMixin, viewsets.ModelViewSet):
     queryset = Course.objects.select_related("category").prefetch_related("tags").all()
     serializer_class = CourseSerializer
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        value = self.kwargs[lookup_url_kwarg]
+
+        if value.isdigit():
+            obj = queryset.filter(pk=value).first()
+            if obj:
+                return obj
+
+        return get_object_or_404(queryset, slug=value)
 
 from django.contrib.auth.models import User
 from .serializers import UserSerializer
