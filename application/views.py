@@ -2,144 +2,193 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
+from django.db import models
+from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Count
 from django.db.models.functions import TruncDate
-from .mixins import ViewCountMixin
 
-from .models import Mahsulot, Category, Tag, Article, Book, Course, VisitorLog
+from .models import Category, SchoolClass, Subject, Lesson, ContactRequest, VisitorLog
 from .serializers import (
-    MahsulotSerializer, CategorySerializer, TagSerializer, 
-    ArticleSerializer, BookSerializer, CourseSerializer
+    UserSerializer, CategorySerializer, SchoolClassSerializer, 
+    SubjectSerializer, LessonSerializer, ContactRequestSerializer,
+    CatalogClassSerializer
 )
-
-class DashboardStatsAPI(APIView):
-    def get(self, request):
-        today = timezone.now().date()
-        week_ago = today - timedelta(days=6)
-        
-        stats = {
-            "articles_count": Article.objects.count(),
-            "books_count": Book.objects.count(),
-            "courses_count": Course.objects.count(),
-            "visitors_today": VisitorLog.objects.filter(timestamp__date=today).count(),
-            "visitors_week": VisitorLog.objects.filter(timestamp__date__gte=week_ago).count(),
-        }
-        
-        popular_pages = VisitorLog.objects.values('path').annotate(count=Count('id')).order_by('-count')[:5]
-        stats['popular_pages'] = list(popular_pages)
-        
-        visitors_by_day = VisitorLog.objects.filter(timestamp__date__gte=week_ago)\
-            .annotate(date=TruncDate('timestamp'))\
-            .values('date')\
-            .annotate(count=Count('id'))\
-            .order_by('date')
-            
-        chart_data_dict = {str(item['date']): item['count'] for item in visitors_by_day}
-        
-        labels = []
-        data = []
-        for i in range(7):
-            d = week_ago + timedelta(days=i)
-            labels.append(d.strftime("%d %b"))
-            data.append(chart_data_dict.get(str(d), 0))
-            
-        stats['chart_labels'] = labels
-        stats['chart_data'] = data
-        
-        return Response(stats)
-
-class MahsulotAPI(APIView):
-    def get(self, request):
-        malumot = Mahsulot.objects.all() 
-        serializer = MahsulotSerializer(malumot, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        kop_narsami = isinstance(request.data, list)
-        serializer = MahsulotSerializer(data=request.data, many=kop_narsami)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [IsAdminUser]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
 
-class TagViewSet(viewsets.ModelViewSet):
-    queryset = Tag.objects.all()
-    serializer_class = TagSerializer
+class SchoolClassViewSet(viewsets.ModelViewSet):
+    queryset = SchoolClass.objects.all()
+    serializer_class = SchoolClassSerializer
+    permission_classes = [IsAdminUser]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
 
-class ArticleViewSet(ViewCountMixin, viewsets.ModelViewSet):
-    queryset = Article.objects.select_related("category").prefetch_related("tags").all()
-    serializer_class = ArticleSerializer
+class SubjectViewSet(viewsets.ModelViewSet):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+    permission_classes = [IsAdminUser]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
-        value = self.kwargs[lookup_url_kwarg]
+class LessonViewSet(viewsets.ModelViewSet):
+    queryset = Lesson.objects.all()
+    serializer_class = LessonSerializer
+    permission_classes = [IsAdminUser]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
 
-        if value.isdigit():
-            obj = queryset.filter(pk=value).first()
-            if obj:
-                return obj
+class ContactRequestViewSet(viewsets.ModelViewSet):
+    queryset = ContactRequest.objects.all()
+    serializer_class = ContactRequestSerializer
+    permission_classes = [IsAdminUser]
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return super().get_permissions()
 
-        return get_object_or_404(queryset, slug=value)
+class CatalogAPI(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        classes = SchoolClass.objects.filter(is_active=True)
+        serializer = CatalogClassSerializer(classes, many=True)
+        return Response({"classes": serializer.data})
 
-class BookViewSet(ViewCountMixin, viewsets.ModelViewSet):
-    queryset = Book.objects.select_related("category").prefetch_related("tags").all()
-    serializer_class = BookSerializer
+class AdminLoginAPI(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(username=username, password=password)
+        if user and user.is_staff:
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+                "token": token.key,
+                "user": {
+                    "username": user.username,
+                    "is_staff": user.is_staff
+                }
+            })
+        return Response({"detail": "Invalid credentials or not a staff member."}, status=401)
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
-        value = self.kwargs[lookup_url_kwarg]
+class AnalyticsDashboardAPI(APIView):
+    permission_classes = [IsAdminUser]
+    def get(self, request):
+        days = int(request.query_params.get('days', 30))
+        today = timezone.now().date()
+        start_date = today - timedelta(days=days-1)
+        
+        # Summary
+        summary = {
+            "range_days": days,
+            "unique_visitors": VisitorLog.objects.filter(timestamp__date__gte=start_date).values('ip_address').distinct().count(),
+            "total_page_views": VisitorLog.objects.filter(timestamp__date__gte=start_date).count(),
+            "total_sessions": VisitorLog.objects.filter(timestamp__date__gte=start_date).values('ip_address', 'user_agent').distinct().count(),
+            "returning_visitors": 0, # Simplified
+            "total_classes": SchoolClass.objects.count(),
+            "total_subjects": Subject.objects.count(),
+            "total_lessons": Lesson.objects.count(),
+            "total_categories": Category.objects.count(),
+            "contact_requests": ContactRequest.objects.filter(status='new').count(),
+            "avg_session_depth": 1.5 # Placeholder
+        }
+        
+        # Daily Activity
+        activity = VisitorLog.objects.filter(timestamp__date__gte=start_date)\
+            .annotate(day=TruncDate('timestamp'))\
+            .values('day')\
+            .annotate(visits=Count('id'), visitors=Count('ip_address', distinct=True))\
+            .order_by('day')
+            
+        daily_activity = []
+        for i in range(days):
+            d = start_date + timedelta(days=i)
+            # Find in activity
+            found = next((item for item in activity if item['day'] == d), None)
+            daily_activity.append({
+                "day": d.strftime("%Y-%m-%d"),
+                "visits": found['visits'] if found else 0,
+                "visitors": found['visitors'] if found else 0
+            })
+            
+        # Top Pages
+        top_pages = VisitorLog.objects.filter(timestamp__date__gte=start_date)\
+            .values('path')\
+            .annotate(visits=Count('id'))\
+            .order_by('-visits')[:10]
+            
+        # Top Lessons
+        top_lessons = Lesson.objects.order_by('-views_count')[:10].values(
+            'title', 'slug', 'views_count', 
+            subject_title=models.F('subject__title'),
+            class_title=models.F('subject__school_class__title')
+        )
+        
+        # Reformat top_lessons to match frontend
+        formatted_lessons = []
+        for l in top_lessons:
+            formatted_lessons.append({
+                "title": l['title'],
+                "slug": l['slug'],
+                "subject__title": l['subject_title'],
+                "subject__school_class__title": l['class_title'],
+                "views": l['views_count']
+            })
 
-        if value.isdigit():
-            obj = queryset.filter(pk=value).first()
-            if obj:
-                return obj
+        return Response({
+            "summary": summary,
+            "top_pages": list(top_pages),
+            "daily_activity": daily_activity,
+            "event_breakdown": [], # Placeholder
+            "high_demand_topics": [], # Placeholder
+            "top_lessons": formatted_lessons,
+            "class_popularity": [] # Placeholder
+        })
 
-        return get_object_or_404(queryset, slug=value)
+class AnalyticsTrackAPI(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        path = request.data.get('path', '')
+        event_type = request.data.get('event_type', 'page_view')
+        
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+        
+        VisitorLog.objects.create(
+            ip_address=ip,
+            path=path[:255],
+            method=request.method,
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255]
+        )
+        
+        # If it's a lesson view, increment its view count
+        if event_type == 'lesson_open' or 'lesson' in path:
+            # Try to find lesson by slug in path
+            parts = [p for p in path.split('/') if p]
+            if parts:
+                slug = parts[-1]
+                Lesson.objects.filter(slug=slug).update(views_count=models.F('views_count') + 1)
 
-    @action(detail=True, methods=['get'])
-    def download_pdf(self, request, pk=None):
-        book = self.get_object()
-        if book.pdf_file:
-            book.downloads += 1
-            book.save()
-            return FileResponse(book.pdf_file.open(), as_attachment=True, filename=book.pdf_file.name.split('/')[-1])
-        return Response({"error": "Full PDF not available for this book."}, status=status.HTTP_404_NOT_FOUND)
-
-    @action(detail=True, methods=['get'])
-    def read_sample(self, request, pk=None):
-        book = self.get_object()
-        if book.sample_pdf_file:
-            return FileResponse(book.sample_pdf_file.open(), as_attachment=False)
-        return Response({"error": "Sample PDF not available."}, status=status.HTTP_404_NOT_FOUND)
-
-class CourseViewSet(ViewCountMixin, viewsets.ModelViewSet):
-    queryset = Course.objects.select_related("category").prefetch_related("tags").all()
-    serializer_class = CourseSerializer
-
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
-        value = self.kwargs[lookup_url_kwarg]
-
-        if value.isdigit():
-            obj = queryset.filter(pk=value).first()
-            if obj:
-                return obj
-
-        return get_object_or_404(queryset, slug=value)
+        return Response({"status": "ok"})
 
 from django.contrib.auth.models import User
 from .serializers import UserSerializer
-from rest_framework.permissions import IsAdminUser
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()

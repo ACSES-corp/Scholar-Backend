@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework.authtoken',
     'corsheaders',
     'application',
 ]
@@ -64,6 +65,7 @@ MIDDLEWARE = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
@@ -162,7 +164,7 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Quantum UZ boshqaruv paneliga xush kelibsiz!",
     "copyright": "Quantum UZ Team © 2026",
     
-    "search_model": ["application.Article", "application.Book", "application.Course"],
+    "search_model": ["application.SchoolClass", "application.Subject", "application.Lesson"],
     "user_avatar": None,
 
     "topmenu_links": [
@@ -173,24 +175,17 @@ JAZZMIN_SETTINGS = {
     "show_sidebar": True,
     "navigation_expanded": True,
     "hide_apps": [],
-    "hide_models": ["auth.Group", "application.Mahsulot"],
-
-    "custom_links": {
-        "application": [{
-            "name": "Barcha maqolalar", 
-            "url": "application/article/", 
-            "icon": "fas fa-file-alt",
-        }]
-    },
+    "hide_models": ["auth.Group"],
 
     "icons": {
         "auth.User": "fas fa-user",
-        "application.Article": "fas fa-pencil-alt",
-        "application.Book": "fas fa-book",
-        "application.Course": "fas fa-graduation-cap",
         "application.Category": "fas fa-layer-group",
         "application.Tag": "fas fa-tags",
         "application.VisitorLog": "fas fa-chart-line",
+        "application.SchoolClass": "fas fa-school",
+        "application.Subject": "fas fa-book-open",
+        "application.Lesson": "fas fa-play-circle",
+        "application.ContactRequest": "fas fa-envelope",
     },
 
     "default_icon_parents": "fas fa-chevron-circle-right",
@@ -198,11 +193,11 @@ JAZZMIN_SETTINGS = {
     
     "order_with_respect_to": [
         "auth",
-        "application.Article",
-        "application.Course",
-        "application.Book",
+        "application.SchoolClass",
+        "application.Subject",
+        "application.Lesson",
         "application.Category",
-        "application.Tag",
+        "application.ContactRequest",
         "application.VisitorLog"
     ],
 }
@@ -243,6 +238,8 @@ JAZZMIN_UI_TWEAKS = {
 CORS_ALLOWED_ORIGINS = [
     "http://62.72.32.37:3000",
     "https://62.72.32.37:3000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 # Optional but recommended for DRF + Session Authentication or CSRF protection

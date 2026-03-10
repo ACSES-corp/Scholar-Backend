@@ -1,17 +1,23 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import MahsulotAPI, CategoryViewSet, TagViewSet, ArticleViewSet, BookViewSet, CourseViewSet, DashboardStatsAPI, UserViewSet
+from .views import (
+    CategoryViewSet, SchoolClassViewSet, SubjectViewSet, 
+    LessonViewSet, ContactRequestViewSet, UserViewSet,
+    CatalogAPI, AdminLoginAPI, AnalyticsDashboardAPI, AnalyticsTrackAPI
+)
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
-router.register(r'tags', TagViewSet)
-router.register(r'articles', ArticleViewSet)
-router.register(r'books', BookViewSet)
-router.register(r'courses', CourseViewSet)
+router.register(r'classes', SchoolClassViewSet)
+router.register(r'subjects', SubjectViewSet)
+router.register(r'lessons', LessonViewSet)
+router.register(r'contact-requests', ContactRequestViewSet)
 router.register(r'users', UserViewSet, basename='users')
 
 urlpatterns = [
-    path('admin-dashboard-stats/', DashboardStatsAPI.as_view(), name='admin-dashboard-stats'),
-    path('mahsulot/', MahsulotAPI.as_view(), name='mahsulot-api'),
+    path('auth/admin-login/', AdminLoginAPI.as_view(), name='admin-login'),
+    path('analytics/dashboard/', AnalyticsDashboardAPI.as_view(), name='analytics-dashboard'),
+    path('analytics/track/', AnalyticsTrackAPI.as_view(), name='analytics-track'),
+    path('public/catalog/', CatalogAPI.as_view(), name='public-catalog'),
     path('', include(router.urls)),
 ]

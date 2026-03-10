@@ -1,90 +1,129 @@
 from django.db import models
-
-class Mahsulot(models.Model):
-    name = models.CharField(max_length=100)
-    price = models.IntegerField()
-    description = models.TextField()
+from django.utils.text import slugify
 
 class Category(models.Model):
-    name = models.CharField(max_length=100)
+    title = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    color = models.CharField(max_length=50, blank=True, null=True)
+    icon_url = models.URLField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
 
-    def __str__(self):
-        return self.name
-
-class Tag(models.Model):
-    name = models.CharField(max_length=50)
-
-    def __str__(self):
-        return self.name
-
-class Article(models.Model):
-    title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, blank=True, null=True)
-    content = models.TextField()
-    summary = models.TextField(blank=True, null=True)
-    author = models.CharField(max_length=100, blank=True, null=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='articles')
-    tags = models.ManyToManyField(Tag, blank=True)
-    cover_image = models.ImageField(upload_to='articles/images/', blank=True, null=True)
-    views = models.PositiveIntegerField(default=0)
-    read_time_minutes = models.PositiveIntegerField(default=5)
-    is_published = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
 
-class Book(models.Model):
-    title = models.CharField(max_length=255)
+    class Meta:
+        ordering = ['order', 'title']
+        verbose_name = "Kategoriya"
+        verbose_name_plural = "Kategoriyalar"
+
+class SchoolClass(models.Model):
+    title = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True, null=True)
-    author = models.CharField(max_length=255)
-    description = models.TextField()
-    cover_image = models.ImageField(upload_to='books/covers/', blank=True, null=True)
-    pdf_file = models.FileField(upload_to='books/pdfs/', blank=True, null=True)
-    sample_pdf_file = models.FileField(upload_to='books/samples/', blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    is_free = models.BooleanField(default=False)
-    pages = models.PositiveIntegerField(blank=True, null=True)
-    language = models.CharField(max_length=50, default='O\'zbek')
-    published_date = models.DateField(blank=True, null=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='books')
-    tags = models.ManyToManyField(Tag, blank=True)
-    views = models.PositiveIntegerField(default=0)
-    downloads = models.PositiveIntegerField(default=0)
-    is_published = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    description = models.TextField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    hero_image_url = models.URLField(blank=True, null=True)
+    cover_image_url = models.URLField(blank=True, null=True)
+    external_link = models.URLField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
 
-class Course(models.Model):
-    LEVEL_CHOICES = (
-        ('Beginner', 'Beginner'),
-        ('Intermediate', 'Intermediate'),
-        ('Advanced', 'Advanced'),
+    class Meta:
+        ordering = ['order', 'title']
+        verbose_name = "Sinf"
+        verbose_name_plural = "Sinflar"
+
+class Subject(models.Model):
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name='subjects')
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='subjects')
+    title = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True, blank=True, null=True)
+    color = models.CharField(max_length=50, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    thumbnail_url = models.URLField(blank=True, null=True)
+    external_link = models.URLField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.title} ({self.school_class.title})"
+
+    class Meta:
+        ordering = ['order', 'title']
+        verbose_name = "Fan"
+        verbose_name_plural = "Fanlar"
+
+class Lesson(models.Model):
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lessons')
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True, blank=True, null=True)
+    youtube_id = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    short_description = models.TextField(blank=True, null=True)
+    duration_seconds = models.PositiveIntegerField(default=0)
+    order = models.PositiveIntegerField(default=1)
+    is_published = models.BooleanField(default=True)
+    views_count = models.PositiveIntegerField(default=0)
+    thumbnail_url = models.URLField(blank=True, null=True)
+    resource_url = models.URLField(blank=True, null=True)
+    external_link = models.URLField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Dars"
+        verbose_name_plural = "Darslar"
+
+class ContactRequest(models.Model):
+    STATUS_CHOICES = (
+        ('new', 'New'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('spam', 'Spam'),
     )
-
-    title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, blank=True, null=True)
-    instructor = models.CharField(max_length=255)
-    description = models.TextField()
-    thumbnail = models.ImageField(upload_to='courses/thumbnails/', blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    is_free = models.BooleanField(default=False)
-    level_type = models.CharField(max_length=50, choices=LEVEL_CHOICES, default='Beginner')
-    duration_hours = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='courses')
-    tags = models.ManyToManyField(Tag, blank=True)
-    views = models.PositiveIntegerField(default=0)
-    is_published = models.BooleanField(default=True)
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone = models.CharField(max_length=50, blank=True, null=True)
+    telegram = models.CharField(max_length=100, blank=True, null=True)
+    source = models.CharField(max_length=100, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.full_name} - {self.status}"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Bog'lanish so'rovi"
+        verbose_name_plural = "Bog'lanish so'rovlari"
 
 class VisitorLog(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
@@ -102,3 +141,8 @@ class VisitorLog(models.Model):
 
     def __str__(self):
         return f"{self.ip_address} visited {self.path} at {self.timestamp}"
+
+# Keep Old Models for safety or remove if sure?
+# User said "shunchaki db nomi va boshqa bazi narsalarni o'zgartiramiz bo'ldi, crudlari tayyor"
+# I'll keep Article and Book for now but commented out or just hidden.
+# Actually I'll remove them to avoid confusion since the Next.js app doesn't use them.
