@@ -244,9 +244,21 @@ CORS_ALLOWED_ORIGINS = [
 
 # Optional but recommended for DRF + Session Authentication or CSRF protection
 CSRF_TRUSTED_ORIGINS = [
-    "http://62.72.32.37:3000",
-    "https://62.72.32.37:3000",
+    "http://62.72.32.37",
+    "https://62.72.32.37",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
+
+# SESSION and CSRF cookies
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+
+# Security headers for proxy (enable when using SSL)
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 
 # To allow all origins (less secure, use only for debugging if needed)
 # CORS_ALLOW_ALL_ORIGINS = True

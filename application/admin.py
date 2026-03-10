@@ -1,36 +1,45 @@
 from django.contrib import admin
-from .models import Mahsulot, Category, Tag, Article, Book, Course, VisitorLog
+from .models import Category, SchoolClass, Subject, Lesson, ContactRequest, VisitorLog
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-
-@admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-
-@admin.register(Article)
-class ArticleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'views', 'is_published', 'created_at')
-    list_filter = ('is_published', 'category', 'created_at')
-    search_fields = ('title', 'content')
+    list_display = ('title', 'slug', 'order', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title',)
     prepopulated_fields = {'slug': ('title',)}
 
-@admin.register(Book)
-class BookAdmin(admin.ModelAdmin):
-    list_display = ('title', 'author', 'price', 'is_free', 'views', 'downloads', 'is_published')
-    list_filter = ('is_published', 'is_free', 'category', 'language')
-    search_fields = ('title', 'author')
+@admin.register(SchoolClass)
+class SchoolClassAdmin(admin.ModelAdmin):
+    list_display = ('title', 'slug', 'order', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title',)
     prepopulated_fields = {'slug': ('title',)}
 
-@admin.register(Course)
-class CourseAdmin(admin.ModelAdmin):
-    list_display = ('title', 'instructor', 'level_type', 'price', 'is_free', 'views', 'is_published')
-    list_filter = ('is_published', 'is_free', 'level_type', 'category')
-    search_fields = ('title', 'instructor')
+class LessonInline(admin.TabularInline):
+    model = Lesson
+    extra = 1
+
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ('title', 'school_class', 'category', 'order', 'is_active')
+    list_filter = ('school_class', 'category', 'is_active')
+    search_fields = ('title',)
     prepopulated_fields = {'slug': ('title',)}
+    inlines = [LessonInline]
+
+@admin.register(Lesson)
+class LessonAdmin(admin.ModelAdmin):
+    list_display = ('title', 'subject', 'youtube_id', 'order', 'is_published', 'views_count')
+    list_filter = ('is_published', 'subject')
+    search_fields = ('title', 'youtube_id')
+    prepopulated_fields = {'slug': ('title',)}
+
+@admin.register(ContactRequest)
+class ContactRequestAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'email', 'phone', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('full_name', 'email', 'message')
+    readonly_fields = ('created_at',)
 
 @admin.register(VisitorLog)
 class VisitorLogAdmin(admin.ModelAdmin):
@@ -42,8 +51,3 @@ class VisitorLogAdmin(admin.ModelAdmin):
         return False
     def has_change_permission(self, request, obj=None):
         return False
-
-@admin.register(Mahsulot)
-class MahsulotAdmin(admin.ModelAdmin):
-    list_display = ('name', 'price')
-    search_fields = ('name',)
