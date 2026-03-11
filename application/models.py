@@ -3,7 +3,7 @@ from django.utils.text import slugify
 
 class Category(models.Model):
     title = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     color = models.CharField(max_length=50, blank=True, null=True)
     icon_url = models.URLField(blank=True, null=True)
@@ -25,7 +25,7 @@ class Category(models.Model):
 
 class SchoolClass(models.Model):
     title = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
@@ -50,7 +50,7 @@ class Subject(models.Model):
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name='subjects')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='subjects')
     title = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
     color = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.PositiveIntegerField(default=1)
@@ -74,7 +74,7 @@ class Subject(models.Model):
 class Lesson(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lessons')
     title = models.CharField(max_length=255)
-    slug = models.SlugField(unique=True, blank=True, null=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
     youtube_id = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     short_description = models.TextField(blank=True, null=True)

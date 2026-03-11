@@ -39,18 +39,18 @@ class CatalogLessonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = ('id', 'title', 'youtubeId', 'description', 'duration_seconds', 'order')
+        fields = ('id', 'slug', 'title', 'youtubeId', 'description', 'duration_seconds', 'order')
 
 class CatalogSubjectSerializer(serializers.ModelSerializer):
     lessons = CatalogLessonSerializer(many=True, read_only=True)
 
     class Meta:
         model = Subject
-        fields = ('id', 'title', 'color', 'lessons', 'order')
+        fields = ('id', 'slug', 'title', 'color', 'lessons', 'order')
 
 class CatalogClassSerializer(serializers.ModelSerializer):
     subjects = CatalogSubjectSerializer(many=True, read_only=True)
 
     class Meta:
         model = SchoolClass
-        fields = ('id', 'title', 'subjects', 'order')
+        fields = ('id', 'slug', 'title', 'subjects', 'order')
