@@ -23,7 +23,7 @@ def run():
         print(stderr.read().decode(), file=sys.stderr)
         
         # 2. Upload the fixed views.py
-        local_views_path = r'd:\Complete\Quantum uz\Quantum uz backend\application\views.py'
+        local_views_path = r'd:\Complete\Quantum uz\ACSES Scholar backend\application\views.py'
         remote_views_path = f"{backend_path}/application/views.py"
         
         print(f"Uploading {local_views_path} to {remote_views_path}...")

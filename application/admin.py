@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, SchoolClass, Subject, Lesson, ContactRequest, VisitorLog
+from .models import Category, SchoolClass, Subject, Lesson, ContactRequest, VisitorLog, Tag, BlogPost
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -40,6 +40,39 @@ class ContactRequestAdmin(admin.ModelAdmin):
     list_filter = ('status', 'created_at')
     search_fields = ('full_name', 'email', 'message')
     readonly_fields = ('created_at',)
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug')
+    search_fields = ('name',)
+    prepopulated_fields = {'slug': ('name',)}
+
+@admin.register(BlogPost)
+class BlogPostAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'status', 'is_featured', 'created_at')
+    list_filter = ('status', 'is_featured', 'category', 'created_at', 'has_math', 'has_chart')
+    search_fields = ('title', 'content', 'excerpt')
+    prepopulated_fields = {'slug': ('title',)}
+    filter_horizontal = ('tags',)
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'slug', 'author', 'content', 'excerpt', 'thumbnail')
+        }),
+        ('Classification', {
+            'fields': ('category', 'tags', 'status', 'is_featured')
+        }),
+        ('Content Features', {
+            'fields': ('has_math', 'has_chart', 'has_video', 'has_animation')
+        }),
+        ('SEO', {
+            'fields': ('meta_title', 'meta_description')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    readonly_fields = ('created_at', 'updated_at')
 
 @admin.register(VisitorLog)
 class VisitorLogAdmin(admin.ModelAdmin):

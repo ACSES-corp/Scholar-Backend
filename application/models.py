@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
+from django.contrib.auth.models import User
 
 class Category(models.Model):
     title = models.CharField(max_length=100)
@@ -142,7 +143,62 @@ class VisitorLog(models.Model):
     def __str__(self):
         return f"{self.ip_address} visited {self.path} at {self.timestamp}"
 
-# Keep Old Models for safety or remove if sure?
-# User said "shunchaki db nomi va boshqa bazi narsalarni o'zgartiramiz bo'ldi, crudlari tayyor"
-# I'll keep Article and Book for now but commented out or just hidden.
-# Actually I'll remove them to avoid confusion since the Next.js app doesn't use them.
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Teg"
+        verbose_name_plural = "Teglar"
+
+class BlogPost(models.Model):
+    STATUS_CHOICES = (
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+    )
+
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, null=True)
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='blog_posts')
+    content = models.TextField()  # Markdown supported
+    excerpt = models.TextField(blank=True, null=True)
+    thumbnail = models.ImageField(upload_to='blog/thumbnails/', blank=True, null=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='blog_posts')
+    tags = models.ManyToManyField(Tag, blank=True, related_name='blog_posts')
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='published')
+    is_featured = models.BooleanField(default=False)
+    
+    # Flags for front-end dynamic loading
+    has_math = models.BooleanField(default=False)
+    has_chart = models.BooleanField(default=False)
+    has_video = models.BooleanField(default=False)
+    has_animation = models.BooleanField(default=False)
+    
+    # SEO
+    meta_title = models.CharField(max_length=255, blank=True, null=True)
+    meta_description = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Blog posti"
+        verbose_name_plural = "Blog postlari"

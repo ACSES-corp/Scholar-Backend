@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Category, SchoolClass, Subject, Lesson, ContactRequest, VisitorLog
+from .models import Category, SchoolClass, Subject, Lesson, ContactRequest, VisitorLog, Tag, BlogPost
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,6 +32,23 @@ class ContactRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactRequest
         fields = '__all__'
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = '__all__'
+
+class BlogPostSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.title', read_only=True)
+    author_name = serializers.CharField(source='author.get_full_name', read_only=True)
+    tags_list = TagSerializer(source='tags', many=True, read_only=True)
+
+    class Meta:
+        model = BlogPost
+        fields = '__all__'
+        extra_kwargs = {
+            'slug': {'required': False}
+        }
 
 # For the public catalog specialized serializers
 class CatalogLessonSerializer(serializers.ModelSerializer):

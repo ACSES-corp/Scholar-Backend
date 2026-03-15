@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CategoryViewSet, SchoolClassViewSet, SubjectViewSet, 
     LessonViewSet, ContactRequestViewSet, UserViewSet,
+    TagViewSet, BlogPostViewSet,
     CatalogAPI, AdminLoginAPI, AnalyticsDashboardAPI, AnalyticsTrackAPI
 )
 
@@ -12,6 +13,8 @@ router.register(r'classes', SchoolClassViewSet)
 router.register(r'subjects', SubjectViewSet)
 router.register(r'lessons', LessonViewSet)
 router.register(r'contact-requests', ContactRequestViewSet)
+router.register(r'tags', TagViewSet)
+router.register(r'blog-posts', BlogPostViewSet)
 router.register(r'users', UserViewSet, basename='users')
 
 urlpatterns = [

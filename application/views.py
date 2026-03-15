@@ -11,11 +11,11 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models.functions import TruncDate
 
-from .models import Category, SchoolClass, Subject, Lesson, ContactRequest, VisitorLog
+from .models import Category, SchoolClass, Subject, Lesson, ContactRequest, VisitorLog, Tag, BlogPost
 from .serializers import (
     UserSerializer, CategorySerializer, SchoolClassSerializer, 
     SubjectSerializer, LessonSerializer, ContactRequestSerializer,
-    CatalogClassSerializer
+    CatalogClassSerializer, TagSerializer, BlogPostSerializer
 )
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -60,6 +60,30 @@ class ContactRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
     def get_permissions(self):
         if self.action == 'create':
+            return [AllowAny()]
+        return super().get_permissions()
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [IsAdminUser]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
+
+class BlogPostViewSet(viewsets.ModelViewSet):
+    queryset = BlogPost.objects.all()
+    serializer_class = BlogPostSerializer
+    permission_classes = [IsAdminUser]
+    
+    def get_queryset(self):
+        if self.request.user and self.request.user.is_staff:
+            return BlogPost.objects.all()
+        return BlogPost.objects.filter(status='published')
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return super().get_permissions()
 

@@ -21,6 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
+def env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name, default=""):
+    value = os.getenv(name, default)
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -28,9 +40,9 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-^m!5$ju_6sk_fo1*lo=u#%lv%7id5fp4dsh&fv)5wo7=x&)-!#")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
+DEBUG = env_bool("DJANGO_DEBUG", True)
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 
 
 # Application definition
@@ -140,7 +152,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = os.getenv("DJANGO_TIME_ZONE", "Asia/Tashkent")
 
 USE_I18N = True
 
@@ -150,19 +162,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 JAZZMIN_SETTINGS = {
-    "site_title": "Quantum UZ Admin",
-    "site_header": "Quantum UZ",
-    "site_brand": "Quantum Dashboard",
+    "site_title": "ACSES Scholar Admin",
+    "site_header": "ACSES Scholar",
+    "site_brand": "ACSES Scholar Dashboard",
     "site_logo_classes": "img-circle",
-    "welcome_sign": "Quantum UZ boshqaruv paneliga xush kelibsiz!",
-    "copyright": "Quantum UZ Team © 2026",
+    "welcome_sign": "ACSES Scholar boshqaruv paneliga xush kelibsiz!",
+    "copyright": "ACSES Scholar Team © 2026",
     
     "search_model": ["application.SchoolClass", "application.Subject", "application.Lesson"],
     "user_avatar": None,
@@ -235,28 +247,27 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://62.72.32.37:3000",
-    "https://62.72.32.37:3000",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+CORS_ALLOWED_ORIGINS = env_list(
+    "DJANGO_CORS_ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000",
+)
+CORS_ALLOW_ALL_ORIGINS = env_bool("DJANGO_CORS_ALLOW_ALL_ORIGINS", False)
 
 # Optional but recommended for DRF + Session Authentication or CSRF protection
-CSRF_TRUSTED_ORIGINS = [
-    "http://62.72.32.37",
-    "https://62.72.32.37",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+CSRF_TRUSTED_ORIGINS = env_list(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000",
+)
 
 # SESSION and CSRF cookies
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = env_bool("DJANGO_SESSION_COOKIE_SECURE", False)
+CSRF_COOKIE_SECURE = env_bool("DJANGO_CSRF_COOKIE_SECURE", False)
+CSRF_COOKIE_HTTPONLY = env_bool("DJANGO_CSRF_COOKIE_HTTPONLY", False)
 
 # Security headers for proxy (enable when using SSL)
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+if env_bool("DJANGO_SECURE_PROXY_SSL_HEADER", True):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 

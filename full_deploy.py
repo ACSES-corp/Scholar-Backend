@@ -14,7 +14,7 @@ backend_path = '/var/www/acses_backend'
 frontend_path = '/var/www/acses_scholar'
 
 # Local paths
-base_local = r'd:/Complete/ACSES Scholar/Quantum uz backend'
+base_local = r'd:/Complete/ACSES Scholar/ACSES Scholar backend'
 
 def run_commands(client, commands):
     for cmd in commands:
