@@ -42,6 +42,12 @@ class BlogPostSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.title', read_only=True)
     author_name = serializers.CharField(source='author.get_full_name', read_only=True)
     tags_list = TagSerializer(source='tags', many=True, read_only=True)
+    thumbnail = serializers.SerializerMethodField()
+
+    def get_thumbnail(self, obj):
+        if not obj.thumbnail:
+            return None
+        return obj.thumbnail.url
 
     class Meta:
         model = BlogPost

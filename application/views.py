@@ -79,8 +79,15 @@ class BlogPostViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         if self.request.user and self.request.user.is_staff:
-            return BlogPost.objects.all()
-        return BlogPost.objects.filter(status='published')
+            queryset = BlogPost.objects.all()
+        else:
+            queryset = BlogPost.objects.filter(status='published')
+
+        slug = self.request.query_params.get('slug')
+        if slug:
+            queryset = queryset.filter(slug=slug)
+
+        return queryset
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
